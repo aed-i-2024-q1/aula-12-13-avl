@@ -75,6 +75,75 @@ Node* createNode(Element key) {
     return newNode;
 }
 
+int height(Node* node) {
+    if (node == NULL) {
+        return 0;
+    }
+
+    return node->height;
+}
+
+int balanceFactor(Node* node) {
+    if (node == NULL) {
+        return 0;
+    }
+
+    return height(node->left) - height(node->right);
+}
+
+int maximum(int a, int b) {
+    return (a > b) ? a : b;
+}
+
+void updateHeight(Node* node) {
+    if (node != NULL) {
+        node->height = 1 + maximum(height(node->left), height(node->right));
+    }
+}
+
+Node* rotateRight(Node* node) {
+    Node* pivot = node->left;
+
+    node->left = pivot->right;
+    pivot->right = node;
+
+    updateHeight(node);
+    updateHeight(pivot);
+
+    return pivot;
+}
+
+
+Node* rotateLeft(Node* node) {
+    Node* pivot = node->right;
+
+    node->right = pivot->left;
+    pivot->left = node;
+
+    updateHeight(node);
+    updateHeight(pivot);
+
+    return pivot;
+}
+
+Node* rebalance(Node* node) {
+    updateHeight(node);
+
+    if (balanceFactor(node) < - 1) {
+        if (balanceFactor(node->right) > 0) {
+            node->right = rotateRight(node->right);
+        }
+        return rotateLeft(node);
+    } else if (balanceFactor(node) > 1) {
+        if (balanceFactor(node->left) < 0) {
+            node->left = rotateLeft(node->left);
+        }
+        return rotateRight(node);
+    }
+
+    return node;
+}
+
 Node* insertRecur(Node* node, Element key) {
     if (node == NULL) {
         return createNode(key);
@@ -85,7 +154,7 @@ Node* insertRecur(Node* node, Element key) {
         node->right = insertRecur(node->right, key);
     }
 
-    return node;
+    return rebalance(node);
 }
 
 void avl_insert(AVL* bst, Element key) {
@@ -133,7 +202,7 @@ Node* removeRecur(Node* node, Element key) {
         }
     }
 
-    return node;
+    return rebalance(node);
 }
 
 void avl_remove(AVL* bst, Element key) {
@@ -154,7 +223,7 @@ void printDiagram(Node* node, int level) {
     printf("  ");
   }
   element_print(node->key);
-//   printf(",%d,%d ", height(node), balanceFactor(node));
+  printf(",%d,%d ", height(node), balanceFactor(node));
   printf("\n");
   printDiagram(node->left, level + 1);  
   printDiagram(node->right, level + 1);
